@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       meta_url:
-        description: Meta endpoint to read the endpoint list from
+        description: Meta endpoint to read the endpoint list from (defaults to this instance's own API)
         required: false
-        default: https://api.github.com/meta
+        default: ""
       max_hosts:
         description: Maximum number of endpoints to scan (0 = all)
         required: false
@@ -51,7 +51,7 @@ jobs:
       - name: Scan GitHub endpoints
         shell: pwsh
         env:
-          META_URL: ${{ inputs.meta_url || 'https://api.github.com/meta' }}
+          META_URL: ${{ inputs.meta_url || format('{0}/meta', github.api_url) }}
           MAX_HOSTS: ${{ inputs.max_hosts || '0' }}
           OUTPUT_DIR: tls-report
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
