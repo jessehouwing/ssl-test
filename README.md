@@ -17,17 +17,22 @@ The report is written to the job summary and uploaded as the
 
 ## Running locally
 
-Requires `curl`, `jq` and OpenSSL 3.5 or newer:
+Requires PowerShell 7.2+ and OpenSSL 3.5 or newer:
 
-```sh
-sh scripts/scan-github-tls.sh
+```pwsh
+./scripts/scan-github-tls.ps1
 ```
 
-Or, without a local OpenSSL 3.5:
+Or, without a local OpenSSL 3.5, using the same Alpine image as the workflow:
 
-```sh
-docker run --rm -v "$PWD:/repo" -w /repo alpine:3.22 \
-  sh -c 'apk add --no-cache curl jq openssl && sh scripts/scan-github-tls.sh'
+```pwsh
+docker run --rm -v "${PWD}:/repo" -w /repo alpine:3.22 sh -c @'
+  apk add --no-cache curl openssl ca-certificates less ncurses-terminfo-base krb5-libs libgcc libintl libssl3 libstdc++ tzdata userspace-rcu zlib icu-libs
+  curl -L https://github.com/PowerShell/PowerShell/releases/download/v7.4.20/powershell-7.4.20-linux-musl-x64.tar.gz -o /tmp/pwsh.tar.gz
+  mkdir -p /opt/microsoft/powershell/7 && tar zxf /tmp/pwsh.tar.gz -C /opt/microsoft/powershell/7
+  ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
+  pwsh ./scripts/scan-github-tls.ps1
+'@
 ```
 
 ### Options
@@ -41,6 +46,9 @@ docker run --rm -v "$PWD:/repo" -w /repo alpine:3.22 \
 | `PQ_GROUPS` | `X25519MLKEM768 SecP256r1MLKEM768 SecP384r1MLKEM1024` | Hybrid groups to probe |
 | `MAX_HOSTS` | `0` | Maximum number of endpoints to scan (`0` = all) |
 | `CONNECT_TIMEOUT` | `10` | Timeout in seconds for a single handshake |
+
+Each option is also available as a matching script parameter, e.g.
+`./scripts/scan-github-tls.ps1 -MaxHosts 5`.
 
 ## Report
 
