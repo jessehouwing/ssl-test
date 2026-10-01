@@ -43,6 +43,7 @@ jobs:
           META_URL: ${{ inputs.meta_url || 'https://api.github.com/meta' }}
           MAX_HOSTS: ${{ inputs.max_hosts || '0' }}
           OUTPUT_DIR: tls-report
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: sh scripts/scan-github-tls.sh
 
       - name: Publish report to the job summary

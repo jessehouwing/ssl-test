@@ -14,6 +14,8 @@
 #   MAX_HOSTS    Maximum number of hosts to scan, 0 means no limit (default: 0)
 #   PORT         TLS port to connect to (default: 443)
 #   CONNECT_TIMEOUT  Timeout in seconds for a single handshake (default: 10)
+#   GITHUB_TOKEN     Optional token used to authenticate the meta request
+#                    (needed for GitHub Enterprise Cloud with data residency)
 
 set -eu
 
@@ -45,6 +47,7 @@ else
   curl --fail --silent --show-error \
     --header 'Accept: application/vnd.github+json' \
     --header 'X-GitHub-Api-Version: 2022-11-28' \
+    ${GITHUB_TOKEN:+--header "Authorization: Bearer $GITHUB_TOKEN"} \
     "$META_URL" -o "$meta_json"
 fi
 
