@@ -1,0 +1,55 @@
+
+name: GitHub endpoints TLS scan
+
+# Example workflow: lists the TLS configuration of the GitHub endpoints
+# published by https://api.github.com/meta and reports which of them already
+# offer a post-quantum (hybrid ML-KEM) key exchange.
+on:
+  workflow_dispatch:
+    inputs:
+      meta_url:
+        description: Meta endpoint to read the endpoint list from
+        required: false
+        default: https://api.github.com/meta
+      max_hosts:
+        description: Maximum number of endpoints to scan (0 = all)
+        required: false
+        default: "0"
+  # "init" run: also scan whenever the scanner itself changes.
+  push:
+    paths:
+      - .github/workflows/github-tls-scan.yml
+      - scripts/scan-github-tls.sh
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    # Alpine 3.22 ships OpenSSL 3.5, which supports the hybrid ML-KEM groups
+    # (X25519MLKEM768, SecP256r1MLKEM768, SecP384r1MLKEM1024).
+    container:
+      image: alpine:3.22
+    steps:
+      - name: Install dependencies
+        run: apk add --no-cache curl git jq openssl
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan GitHub endpoints
+        env:
+          META_URL: ${{ inputs.meta_url || 'https://api.github.com/meta' }}
+          MAX_HOSTS: ${{ inputs.max_hosts || '0' }}
+          OUTPUT_DIR: tls-report
+        run: sh scripts/scan-github-tls.sh
+
+      - name: Publish report to the job summary
+        run: cat tls-report/github-tls-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-tls-report
+          path: tls-report/
